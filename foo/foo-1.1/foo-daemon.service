@@ -1,0 +1,10 @@
+[Unit]
+Description=Sample daemon that demonstrates SCLs
+
+[Service]
+Type=simple
+ExecStart=@bindir@/foo-daemon
+
+[Install]
+WantedBy=multi-user.target
+

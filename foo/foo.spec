@@ -2,13 +2,15 @@
 %{!?scl:%global pkg_name %{name}}
 
 Name:		%{?scl_pkg_name}%{?!scl_pkg_name:foo}
-Version:	1
+Version:	1.1
 Release:	1%{?dist}
 Summary:	Example of CLI package
 
 Group:		Applications/System
 License:	BSD
 URL:		http://example.com
+
+Source0:	%{pkg_name}-%{version}.tar.gz
 
 %description
 This is an example package to demonstrate a simple application and
@@ -24,7 +26,12 @@ This is an example package to demonstrate a simple application and
 daemon packaged as Software Collection.
 
 
+%prep
+%setup -q 
+
 %build
+%cmake .
+
 cat > %{pkg_name}-run <<EOF
 #!/bin/sh
 echo "Hello, my name is %{name}."
@@ -39,11 +46,13 @@ while true ; do
 done
 EOF
 
-
 %install
 mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}%{_unitdir}
+
 install -m 0755 %{pkg_name}-run %{buildroot}%{_bindir}/%{pkg_name}-run
 install -m 0755 %{pkg_name}-daemon %{buildroot}%{_bindir}/%{pkg_name}-daemon
+install -m 0644 %{pkg_name}-daemon.service %{buildroot}%{_unitdir}/%{pkg_name}-daemon.service
 
 
 %files
@@ -51,6 +60,7 @@ install -m 0755 %{pkg_name}-daemon %{buildroot}%{_bindir}/%{pkg_name}-daemon
 
 %files server
 %{_bindir}/%{pkg_name}-daemon
+%{_unitdir}/%{pkg_name}-daemon.service
 
 
 %changelog
