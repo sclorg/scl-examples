@@ -10,7 +10,8 @@ Group:		Applications/System
 License:	BSD
 URL:		http://example.com
 
-Source0:	%{pkg_name}-%{version}.tar.gz
+Source0:	https://github.com/sclorg/scl-examples/archive/v%{version}/scl-examples-v%{version}.tar.gz
+
 
 %description
 This is an example package to demonstrate a simple application and
@@ -27,7 +28,7 @@ daemon packaged as Software Collection.
 
 
 %prep
-%setup -q 
+%setup -q  -n scl-examples-%{version}
 
 %build
 pushd foo-src
@@ -39,10 +40,6 @@ popd
 pushd foo-src
 make DESTDIR=%{buildroot} install
 popd
-
-#mkdir -p %{buildroot}%{_unitdir}
-
-#install -m 0644 %{pkg_name}-daemon.service %{buildroot}%{_unitdir}/%{pkg_name}-daemon.service
 
 
 %files
