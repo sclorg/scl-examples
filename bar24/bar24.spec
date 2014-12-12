@@ -1,18 +1,20 @@
 %{!?scl_name_base: %global scl_name_base bar}
-%{!?scl_name_version: %global scl_name_version 1}
+%{!?version_major: %global version_major 2}
+%{!?version_minor: %global version_minor 4}
+%{!?scl_name_version: %global scl_name_version %{version_major}%{version_minor}}
 %{!?scl:%global scl %{scl_name_base}%{scl_name_version}}
 %{!?scl_vendor_in_name: %global scl_vendor_in_name 1}
 %{?scl_package:%scl_package %scl}
 
 # needed, because we can't use Requires: %{?scl_v8_%{scl_name_base}}
-%global scl_foo foo1
-%global scl_foo_pkg %{scl_vendor}-foo1
+%global scl_foo foo42
+%global scl_foo_pkg %{?scl_vendor_in_name: %{scl_vendor}-}foo42
 
 # do not produce empty debuginfo package
 %global debug_package %{nil}
 
 Summary: Package that installs %{scl}
-Name: %{?scl_meta_name}%{!?scl_meta_name:%scl_name}
+Name: %{?scl_meta_name}%{!?scl_meta_name:%scl}
 Version: 1.0
 Release: 1%{?dist}
 License: GPLv2+
