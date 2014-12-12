@@ -1,0 +1,52 @@
+
+Executing(%prep): /bin/sh -e /var/tmp/rpm-tmp.IXSkpF
++ umask 022
++ cd /home/hhorak/upstreams/scl-examples/fooplugin
++ cd /home/hhorak/upstreams/scl-examples/fooplugin
++ rm -rf fooplugin-2.3
++ /usr/bin/mkdir -p fooplugin-2.3
++ cd fooplugin-2.3
++ /usr/bin/chmod -Rf a+rX,u+w,g-w,o-w .
++ exit 0
+Executing(%build): /bin/sh -e /var/tmp/rpm-tmp.J0ifMb
++ umask 022
++ cd /home/hhorak/upstreams/scl-examples/fooplugin
++ cd fooplugin-2.3
++ cat
++ exit 0
+Executing(%install): /bin/sh -e /var/tmp/rpm-tmp.OiKA9H
++ umask 022
++ cd /home/hhorak/upstreams/scl-examples/fooplugin
++ '[' /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64 '!=' / ']'
++ rm -rf /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64
+++ dirname /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64
++ mkdir -p /home/hhorak/rpmbuild/BUILDROOT
++ mkdir /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64
++ cd fooplugin-2.3
++ mkdir -p /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64/usr/share/fooplugin
++ install -m 0755 fooplugin /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64/usr/share/fooplugin
++ /usr/lib/rpm/find-debuginfo.sh --strict-build-id -m --run-dwz --dwz-low-mem-die-limit 10000000 --dwz-max-die-limit 110000000 /home/hhorak/upstreams/scl-examples/fooplugin/fooplugin-2.3
+/usr/lib/rpm/sepdebugcrcfix: Updated 0 CRC32s, 0 CRC32s did match.
++ /usr/lib/rpm/check-buildroot
++ /usr/lib/rpm/redhat/brp-compress
++ /usr/lib/rpm/redhat/brp-strip-static-archive /usr/bin/strip
++ /usr/lib/rpm/brp-python-bytecompile /usr/bin/python 1
++ /usr/lib/rpm/redhat/brp-python-hardlink
++ /usr/lib/rpm/redhat/brp-java-repack-jars
+Processing files: fooplugin-2.3-1.fc20.x86_64
+Provides: fooplugin = 2.3-1.fc20 fooplugin(x86-64) = 2.3-1.fc20
+Requires(rpmlib): rpmlib(CompressedFileNames) <= 3.0.4-1 rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1
+Requires: /bin/sh
+Processing files: fooplugin-debuginfo-2.3-1.fc20.x86_64
+Provides: fooplugin-debuginfo = 2.3-1.fc20 fooplugin-debuginfo(x86-64) = 2.3-1.fc20
+Requires(rpmlib): rpmlib(FileDigests) <= 4.6.0-1 rpmlib(PayloadFilesHavePrefix) <= 4.0-1 rpmlib(CompressedFileNames) <= 3.0.4-1
+Checking for unpackaged file(s): /usr/lib/rpm/check-files /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64
+Wrote: /home/hhorak/upstreams/scl-examples/fooplugin/fooplugin-2.3-1.fc20.src.rpm
+Wrote: /home/hhorak/upstreams/scl-examples/fooplugin/x86_64/fooplugin-2.3-1.fc20.x86_64.rpm
+Wrote: /home/hhorak/upstreams/scl-examples/fooplugin/x86_64/fooplugin-debuginfo-2.3-1.fc20.x86_64.rpm
+Executing(%clean): /bin/sh -e /var/tmp/rpm-tmp.9LoVyO
++ umask 022
++ cd /home/hhorak/upstreams/scl-examples/fooplugin
++ cd fooplugin-2.3
++ /usr/bin/rm -rf /home/hhorak/rpmbuild/BUILDROOT/fooplugin-2.3-1.fc20.x86_64
++ exit 0

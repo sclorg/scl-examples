@@ -1,14 +1,24 @@
+# Define SCL name
 %{!?scl_name_base: %global scl_name_base foo}
-%{!?scl_name_version: %global scl_name_version 1}
-%{!?scl:%global scl %{scl_name_base}%{scl_name_version}}
+%{!?version_major: %global version_major 4}
+%{!?version_minor: %global version_minor 2}
+%{!?scl_name_version: %global scl_name_version %{version_major}%{version_minor}}
+%{!?scl: %global scl %{scl_name_base}%{scl_name_version}}
+
+# Turn on new layout -- prefix for packages and location
+# for config and variable files
+# This must be before calling %%scl_package
+%{!?nfsmountable: %global nfsmountable 1}
 %{!?scl_vendor_in_name: %global scl_vendor_in_name 1}
+
+# Define SCL macros
 %{?scl_package:%scl_package %scl}
 
 # do not produce empty debuginfo package
 %global debug_package %{nil}
 
 Summary: Package that installs %{scl}
-Name: %{?scl_meta_name}%{!?scl_meta_name:%scl_name}
+Name: %{?scl_meta_name}%{!?scl_meta_name:%scl}
 Version: 1.0
 Release: 1%{?dist}
 License: GPLv2+
@@ -91,6 +101,7 @@ EOF
 cat >> %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel << EOF
 %%scl_%{scl_name_base} %{scl}
 %%scl_prefix_%{scl_name_base} %{?scl_prefix}
+%%scl_pkg_prefix_%{scl_name_base} %{?scl_pkg_prefix}
 EOF
 
 # generate a configuration file for daemon
