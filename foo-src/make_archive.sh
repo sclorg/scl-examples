@@ -11,7 +11,12 @@ VERSION="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 # create dir for archive
 archive_dir="${NAME}-${VERSION}"
 mkdir -p "$archive_dir/foo-src"
-cp CMakeLists.txt foo-daemon.service.in foo-daemon.sh foo-run.sh "$archive_dir/foo-src"
+cp CMakeLists.txt \
+   foo-daemon.service.in \
+   foo-daemon.init.in \
+   foo-daemon.sh \
+   foo-run.sh \
+   "$archive_dir/foo-src"
 
 # create archive
 tar czf "${NAME}-${VERSION}.tar.gz" "$archive_dir"
