@@ -1,21 +1,21 @@
 # Define SCL name
+%{!?scl_name_prefix: %global scl_name_prefix scl-}
 %{!?scl_name_base: %global scl_name_base foo}
 %{!?version_major: %global version_major 4}
 %{!?version_minor: %global version_minor 2}
 %{!?scl_name_version: %global scl_name_version %{version_major}%{version_minor}}
-%{!?scl: %global scl %{scl_name_base}%{scl_name_version}}
+%{!?scl: %global scl %{scl_name_prefix}%{scl_name_base}%{scl_name_version}}
 
 # Turn on new layout -- prefix for packages and location
 # for config and variable files
 # This must be before calling %%scl_package
 %{!?nfsmountable: %global nfsmountable 1}
-%{!?scl_vendor_in_name: %global scl_vendor_in_name 1}
-
-# Define SCL macros
-%{?scl_package:%scl_package %scl}
 
 # do not produce empty debuginfo package
 %global debug_package %{nil}
+
+# Define SCL macros
+%{?scl_package:%scl_package %scl}
 
 Summary: Package that installs %{scl}
 Name: %{?scl_meta_name}%{!?scl_meta_name:%scl}
@@ -62,8 +62,8 @@ packages depending on %{scl} Software Collection.
 
 # This section generates README file from a template and creates man page
 # from that file, expanding RPM macros in the template file.
-cat >README <<'EOF'
-%{expand:%(cat %{SOURCE0})}
+cat <<'EOF' | tee README
+%include %{_sourcedir}/README
 EOF
 
 # copy the license file so %%files section sees it
@@ -71,7 +71,7 @@ cp %{SOURCE1} .
 
 %build
 # generate a helper script that will be used by help2man
-cat >h2m_helper <<'EOF'
+cat <<'EOF' | tee h2m_helper
 #!/bin/bash
 [ "$1" == "--version" ] && echo "%{?scl_name} %{version} Software Collection" || cat README
 EOF
@@ -89,49 +89,81 @@ mkdir -p %{buildroot}%{_datadir}/aclocal
 mkdir -p %{buildroot}%{_mandir}/man{1,7,8}
 %endif
 
-cat >> %{buildroot}%{?_scl_scripts}/enable << EOF
-export PATH=%{_bindir}\${PATH:+:\${PATH}}
-export LIBRARY_PATH=%{_libdir}\${LIBRARY_PATH:+:\${LIBRARY_PATH}}
-export LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
-export MANPATH=%{_mandir}:\${MANPATH}
-export CPATH=%{_includedir}\${CPATH:+:\${CPATH}}
+# create enable scriptlet that sets correct environment for collection
+cat << EOF | tee -a %{buildroot}%{?_scl_scripts}/enable
+# For binaries
+export PATH="%{_bindir}\${PATH:+:\${PATH}}"
+# For header files
+export CPATH="%{_includedir}\${CPATH:+:\${CPATH}}"
+# For libraries during build
+export LIBRARY_PATH="%{_libdir}\${LIBRARY_PATH:+:\${LIBRARY_PATH}}"
+# For libraries during linking
+export LD_LIBRARY_PATH="%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+# For man pages; empty field makes man to consider also standard path
+export MANPATH="%{_mandir}:\${MANPATH}"
+# For Java Packages Tools to locate java.conf
+export JAVACONFDIRS="%{_sysconfdir}/java:\${JAVACONFDIRS:-/etc/java}"
+# For XMvn to locate its configuration file(s)
+export XDG_CONFIG_DIRS="%{_sysconfdir}/xdg:\${XDG_CONFIG_DIRS:-/etc/xdg}"
+# For systemtap
+export XDG_DATA_DIRS="%{_datadir}\${XDG_DATA_DIRS:+:\${XDG_DATA_DIRS}}"
+# For pkg-config
+export PKG_CONFIG_PATH="%{_libdir}/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}"
 EOF
 
 # generate rpm macros file for depended collections
-cat >> %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel << EOF
+cat << EOF | tee -a %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 %%scl_%{scl_name_base} %{scl}
 %%scl_prefix_%{scl_name_base} %{?scl_prefix}
-%%scl_pkg_prefix_%{scl_name_base} %{?scl_pkg_prefix}
-EOF
-
-# generate a configuration file for daemon
-cat >> %{buildroot}%{?_scl_scripts}/service-environment << EOF
-# Services are started in a fresh environment without any influence of user's
-# environment (like environment variable values). As a consequence,
-# information of all enabled collections will be lost during service start up.
-# If user needs to run a service under any software collection enabled, this
-# collection has to be written into SCLNAME_SCLS_ENABLED variable in
-# /opt/rh/sclname/service-environment.
-$(printf '%%s' '%{scl}' | tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED='%{scl}'
 EOF
 
 # install generated man page
 mkdir -p %{buildroot}%{_mandir}/man7/
 install -m 644 %{?scl_name}.7 %{buildroot}%{_mandir}/man7/%{?scl_name}.7
 
-%post runtime
-# Simple copy of context from system root to DSC root.
-# In case new version needs some additional rules or context definition,
-# it needs to be solved.
-# Unfortunately, semanage does not have -e option in RHEL-5, so we would
-# have to have its own policy for collection (inspire in mysql%{scl_name_version} package)
+# create directory for SCL register scripts
+mkdir -p %{buildroot}%{?_scl_scripts}/register.content
+mkdir -p %{buildroot}%{?_scl_scripts}/register.d
+cat <<EOF | tee %{buildroot}%{?_scl_scripts}/register
+#!/bin/sh
+ls %{?_scl_scripts}/register.d/* | while read file ; do
+    [ -x \$f ] && source \$(readlink -f \$file)
+done
+EOF
+# and deregister as well
+mkdir -p %{buildroot}%{?_scl_scripts}/deregister.d
+cat <<EOF | tee %{buildroot}%{?_scl_scripts}/deregister
+#!/bin/sh
+ls %{?_scl_scripts}/deregister.d/* | while read file ; do
+    [ -x \$f ] && source \$(readlink -f \$file)
+done
+EOF
+
+cat <<EOF | tee %{buildroot}%{?_scl_scripts}/register.d/30.selinux-set
+#!/bin/sh
 semanage fcontext -a -e / %{?_scl_root} >/dev/null 2>&1 || :
-semanage fcontext -a -e %{_initddir}/food %{_initddir}/%{?scl_prefix}food >/dev/null 2>&1 || :
-semanage fcontext -a -e %{_root_localstatedir}/log/food.log %{_localstatedir}/log/%{?scl_prefix}food.log >/dev/null 2>&1 || :
-restorecon -R %{?_scl_root} >/dev/null 2>&1 || :
-restorecon %{_initddir}/%{?scl_prefix}food >/dev/null 2>&1 || :
-restorecon %{?_localstatedir}/log/food.log >/dev/null 2>&1 || :
+semanage fcontext -a -e %{_root_sysconfdir} %{_sysconfdir} >/dev/null 2>&1 || :
+semanage fcontext -a -e %{_root_localstatedir} %{_localstatedir} >/dev/null 2>&1 || :
 selinuxenabled && load_policy || :
+EOF
+cat <<EOF | tee %{buildroot}%{?_scl_scripts}/register.d/70.selinux-restore
+restorecon -R %{?_scl_root} >/dev/null 2>&1 || :
+restorecon -R %{_sysconfdir} >/dev/null 2>&1 || :
+restorecon -R %{_localstatedir} >/dev/null 2>&1 || :
+EOF
+
+# we need to own all these directories, so create them to have them listed
+mkdir -p %{buildroot}%{?_scl_scripts}/register.content%{_unitdir}
+mkdir -p %{buildroot}%{?_scl_scripts}/register.content%{_sysconfdir}
+
+%post runtime
+# Simple copy of context from system root to SCL root.
+# In case new version needs some additional rules or context definition,
+# it needs to be solved in base system.
+# semanage does not have -e option in RHEL-5, so we would
+# have to have its own policy for collection.
+%{?_scl_scripts}/register.d/30.selinux-set
+%{?_scl_scripts}/register.d/70.selinux-restore
 
 %files
 
@@ -143,8 +175,13 @@ selinuxenabled && load_policy || :
 %else
 %{_mandir}/man*
 %endif
-%config(noreplace) %{?_scl_scripts}/service-environment
 %{_mandir}/man7/%{?scl_name}.*
+%attr(0755,root,root) %{?_scl_scripts}/register
+%attr(0755,root,root) %{?_scl_scripts}/deregister
+%{?_scl_scripts}/register.content
+%dir %{?_scl_scripts}/register.d
+%dir %{?_scl_scripts}/deregister.d
+%attr(0755,root,root) %{?_scl_scripts}/register.d/*
 
 %files build
 %doc LICENSE
