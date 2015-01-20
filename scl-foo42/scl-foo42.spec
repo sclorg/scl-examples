@@ -18,7 +18,7 @@
 %{?scl_package:%scl_package %scl}
 
 Summary: Package that installs %{scl}
-Name: %{?scl_meta_name}%{!?scl_meta_name:%scl}
+Name: %{scl}
 Version: 1.0
 Release: 1%{?dist}
 License: GPLv2+
@@ -26,7 +26,7 @@ Group: Applications/File
 Source0: README
 Source1: LICENSE
 Requires: scl-utils
-Requires: %{?scl_pkg_prefix}foo
+Requires: %{?scl_prefix}foo
 BuildRequires: scl-utils-build help2man
 
 %description
