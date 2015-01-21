@@ -1,7 +1,98 @@
 #!/bin/sh
-
-#export _SR_BUILDROOT=%{buildroot}
-#export _SR_SCL_SCRIPTS=%{?_scl_scripts}
+#
+# License: BSD
+# Author: Honza Horak <hhorak@redhat.com>
+# URL: https://github.com/sclorg/scl-examples/blob/master/foo/scl-register-helper.sh
+#
+# This script defines a shell function that helps SCL packagers to generate
+# scripts for `scl register` feature. This feature is used in caes where /opt
+# is mounted using NFS and we want to use the collection from /opt still on NFS
+# client.
+#
+# In this case `scl register` is called, which creates basic necessary
+# configuration file to let scl tool to see the collection, but collections
+# need to handle the rest themselves. So, in cases where collections need some
+# special files outside of /opt they need to back-up such files during build
+# and then provide a script that copies or creates those files during `scl register`
+# call. This tool helps to generate scripts for both these cases.
+#
+# This helper script counts with the following structure:
+#
+# /opt/<vendor>/<sclname>/register.content
+#   location for all backed-up files in the collection
+#
+# /opt/<vendor>/<sclname>/register.content/usr/systemd/system/<daemonname>
+#   example of backed-up systemd service file
+#
+# /opt/<vendor>/<sclname>/register
+#   the only script in whole collection run by `scl register`; NOOP if this
+#   script does not exist
+#   to allow different packages to add own stuff to be copied, this script
+#   executes all scripts from ./register.d
+#
+# /opt/<vendor>/<sclname>/register.d
+#   location for scripts relevant for particular packages, run by main register script
+#   numbers in the beginning of the script name ensure correct order of the scripts
+#
+# /opt/<vendor>/<sclname>/register.d/10.<pkgname>.<scripttype>
+#   example of a script releavant for package <pkgname>, the part <scripttype>
+#   only makes the readability easier
+#   those files need to be packaged into the particular package
+#
+# /opt/<vendor>/<sclname>/deregister
+# /opt/<vendor>/<sclname>/deregister.d
+#   main script and directory for particular scripts with the same purpose as register,
+#   except it works for `scl deregister` command
+#
+# How to use it:
+# --------------
+#
+# Define those environment variables in the script where this file is sourced, usually
+# in %%install section
+#   export _SR_BUILDROOT=%%{buildroot}
+#   export _SR_SCL_SCRIPTS=%%{?_scl_scripts}
+#
+# Source the script:
+#   source %{_sourcedir}/scl-register-helper.sh
+#
+# For back-up a file use it like this (without %%{buildroot}):
+#   scl_reggen <pkgname> --cpfile <file-to-backup>
+#     which not only creates a file under register.content, but also generates
+#     scripts XX.<pkgname>.content-create into register.d
+#     and XX.<pkgname>.content-remove into deregister.d.
+#
+# For setting up SELinux context for a file with SELinux equivalency
+# (semanage fcontext -a -e <src> <dst>):
+#   scl_reggen <pkgname> --selinux <pathdst> <pathsrc>
+#     which generates scripts XX.<pkgname>.selinux-set
+#     and XX.<pkgname>.selinux-restore into register.d.
+#
+# For creating dir, touching a file, running chmod, chown or arbitrary
+# commands after register and deregister, there are the following commands
+# options (in the same order):
+#
+#   scl_reggen <pkgname> --mkdir <path>
+#   scl_reggen <pkgname> --touch <path>
+#   scl_reggen <pkgname> --chmod <path> <chmod-args>
+#   scl_reggen <pkgname> --chown <path> <chown-args>
+#   scl_reggen <pkgname> --runafterregister <cmd>
+#   scl_reggen <pkgname> --runafterderegister <cmd>
+#
+# The scripts and backed-up files then must be included into particular packages:
+# %%files <pkgname>
+# %%{?_scl_scripts}/register.d/*.<pkgname>.*
+# %%{?_scl_scripts}/deregister.d/*.<pkgname>.*
+# %%{?_scl_scripts}/register.content/%%{_unitdir}/<daemonname>
+#
+# Tip:
+# Since we need to set the SELinux also when installing the collection normally, we can use the following files to be run as part of the %%post script, like this:
+#   %%post server
+#   %%{?scl:%%{?_scl_scripts}/register.d/*.<pkgname>.selinux-set}
+#   %%{?scl:%%{?_scl_scripts}/register.d/*.<pkgname>-server.selinux-restore}
+#
+# Caution:
+# Don't forget to set the following variables: _SR_BUILDROOT and
+# _SR_SCL_SCRIPTS as described above.
 
 scl_reggen(){
 
