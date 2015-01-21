@@ -19,6 +19,8 @@ URL:		http://example.com
 Source0:	https://github.com/sclorg/scl-examples/archive/v%{version}/scl-examples-v%{version}.tar.gz
 Source1:	scl-register-helper.sh
 
+Patch0:		foo-sclenv.patch
+
 %description
 This is an example package to demonstrate a simple application and
 daemon packaged as Software Collection.
@@ -26,7 +28,7 @@ daemon packaged as Software Collection.
 
 %package	server
 Summary:	Example of Server package with a daemon
-Group:          Applications/System
+Group:		Applications/System
 
 %description server
 This is an example package to demonstrate a simple application and
@@ -35,6 +37,11 @@ daemon packaged as Software Collection.
 
 %prep
 %setup -q  -n scl-examples-%{version}
+
+%if 0%{?scl:1}
+%patch0 -p1 -b .sclenv
+%endif
+
 cp %{SOURCE1} .
 
 %build
@@ -43,6 +50,8 @@ pushd foo-src
 %if 0%{?scl:1}
 	-DSCL_NAME="%{?scl}" \
 	-DSCL_NAME_UPPER="%{?scl_upper}" \
+	-DROOT_BINDIR="%{_root_bindir}" \
+	-DSCL_SCRIPTS="%{?_scl_scripts}" \
 %endif
 	.
 make
