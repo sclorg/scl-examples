@@ -33,7 +33,7 @@ daemon packaged as Software Collection.
 
 %prep
 %setup -q  -n scl-examples-%{version}
-cp ${SOURCE1} .
+cp %{SOURCE1} .
 
 %build
 pushd foo-src
@@ -52,7 +52,7 @@ export _SR_BUILDROOT=%{buildroot}
 export _SR_SCL_SCRIPTS=%{?_scl_scripts}
 
 #include helper script for creating register stuff
-source scl-register-helper.sh
+source %{_sourcedir}/scl-register-helper.sh
 
 %if 0%{?scl:1}
 scl_reggen %{pkg_name}-server --cpfile %{_unitdir}/%{?scl_prefix}food.service
@@ -74,7 +74,7 @@ EOF
 %endif #scl
 
 %post server
-%systemd_post %{daemon_name}.service
+%systemd_post %{?scl_prefix}food.service
 %{?scl:%{_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-set}
 %{?scl:%{_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-restore}
 
