@@ -5,6 +5,8 @@
 %global scl_upper %{lua:print(string.upper(string.gsub(rpm.expand("%{scl}"), "-", "_")))}
 %endif
 
+%global daemonname %{?scl_prefix}%{pkg_name}-daemon.service
+
 Name:		%{?scl_prefix}foo
 Version:	4.2.1
 Release:	2%{?dist}
@@ -38,8 +40,11 @@ cp %{SOURCE1} .
 %build
 pushd foo-src
 %cmake \
+%if 0%{?scl:1}
 	-DSCL_NAME="%{?scl}" \
-	-DSCL_NAME_UPPER="%{?scl_upper}" .
+	-DSCL_NAME_UPPER="%{?scl_upper}" \
+%endif
+	.
 make
 popd
 
@@ -48,19 +53,26 @@ pushd foo-src
 make DESTDIR=%{buildroot} install
 popd
 
-mv %{buildroot}%{_unitdir}/%{pkg_name}-daemon.service %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
+%if 0%{?scl:1}
+mv %{buildroot}%{_unitdir}/%{pkg_name}-daemon.service \
+	%{buildroot}%{_unitdir}/%{daemonname}
+%endif
+
 mkdir -p %{buildroot}%{_sysconfdir}
 touch %{buildroot}%{_sysconfdir}/%{pkg_name}-daemon.cnf
 
-export _SR_BUILDROOT=%{buildroot}
-export _SR_SCL_SCRIPTS=%{?_scl_scripts}
-
+%if 0%{?scl:1}
 #include helper script for creating register stuff
 source %{_sourcedir}/scl-register-helper.sh
 
-%if 0%{?scl:1}
-scl_reggen %{pkg_name}-server --cpfile %{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
-scl_reggen %{pkg_name}-server --selinux %{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service %{_unitdir}/%{pkg_name}-daemon.service
+# configure variables for the helper function scl_reggen
+export _SR_BUILDROOT=%{buildroot}
+export _SR_SCL_SCRIPTS=%{?_scl_scripts}
+
+# backup files and generate register scripts for -server package
+scl_reggen %{pkg_name}-server --cpfile %{_unitdir}/%{daemonname}
+scl_reggen %{pkg_name}-server --selinux %{_unitdir}/%{daemonname} \
+	%{_unitdir}/%{pkg_name}-daemon.service
 scl_reggen %{pkg_name}-server --cpfile %{_sysconfdir}/%{pkg_name}-daemon.cnf
 scl_reggen %{pkg_name}-server --runafterregister 'systemctl daemon-reload'
 scl_reggen %{pkg_name}-server --runafterderegister 'systemctl daemon-reload'
@@ -78,22 +90,24 @@ EOF
 %endif #scl
 
 %post server
-%systemd_post %{?scl_prefix}food.service
-%{?scl:%{_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-set}
-%{?scl:%{_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-restore}
+%systemd_post %{daemonname}
+%{?scl:%{?_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-set}
+%{?scl:%{?_scl_scripts}/register.d/*.%{pkg_name}-server.selinux-restore}
 
 %files
 %{_bindir}/%{pkg_name}-run
 
 %files server
 %{_bindir}/%{pkg_name}-daemon
-%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
+%{_unitdir}/%{daemonname}
 %config(noreplace) %{_sysconfdir}/%{pkg_name}-daemon.cnf
-%{?scl: %{_scl_scripts}/register.d/*.%{pkg_name}-server.*}
-%{?scl: %{_scl_scripts}/deregister.d/*.%{pkg_name}-server.*}
-%{?scl: %{_scl_scripts}/register.content/%{_sysconfdir}/%{pkg_name}-daemon.cnf}
-%{?scl: %{_scl_scripts}/register.content/%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service}
-%{?scl:%config(noreplace) %{?_scl_scripts}/service-environment}
+%if 0%{?scl:1}
+%{?_scl_scripts}/register.d/*.%{pkg_name}-server.*
+%{?_scl_scripts}/deregister.d/*.%{pkg_name}-server.*
+%{?_scl_scripts}/register.content/%{_sysconfdir}/%{pkg_name}-daemon.cnf
+%{?_scl_scripts}/register.content/%{_unitdir}/%{daemonname}
+%config(noreplace) %{?_scl_scripts}/service-environment
+%endif #scl
 
 
 %changelog
