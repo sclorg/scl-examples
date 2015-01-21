@@ -48,6 +48,10 @@ pushd foo-src
 make DESTDIR=%{buildroot} install
 popd
 
+mv %{buildroot}%{_unitdir}/%{pkg_name}-daemon.service %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
+mkdir -p %{buildroot}%{_sysconfdir}
+touch %{buildroot}%{_sysconfdir}/%{pkg_name}-daemon.cnf
+
 export _SR_BUILDROOT=%{buildroot}
 export _SR_SCL_SCRIPTS=%{?_scl_scripts}
 
@@ -55,9 +59,9 @@ export _SR_SCL_SCRIPTS=%{?_scl_scripts}
 source %{_sourcedir}/scl-register-helper.sh
 
 %if 0%{?scl:1}
-scl_reggen %{pkg_name}-server --cpfile %{_unitdir}/%{?scl_prefix}food.service
-scl_reggen %{pkg_name}-server --selinux %{_unitdir}/%{?scl_prefix}food.service %{_unitdir}/food.service
-scl_reggen %{pkg_name}-server --cpfile %{_sysconfdir}/food.cnf
+scl_reggen %{pkg_name}-server --cpfile %{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
+scl_reggen %{pkg_name}-server --selinux %{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service %{_unitdir}/%{pkg_name}-daemon.service
+scl_reggen %{pkg_name}-server --cpfile %{_sysconfdir}/%{pkg_name}-daemon.cnf
 scl_reggen %{pkg_name}-server --runafterregister 'systemctl daemon-reload'
 scl_reggen %{pkg_name}-server --runafterderegister 'systemctl daemon-reload'
 
@@ -83,9 +87,12 @@ EOF
 
 %files server
 %{_bindir}/%{pkg_name}-daemon
-%{_unitdir}/%{pkg_name}-daemon.service
+%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service
+%config(noreplace) %{_sysconfdir}/%{pkg_name}-daemon.cnf
 %{?scl: %{_scl_scripts}/register.d/*.%{pkg_name}-server.*}
 %{?scl: %{_scl_scripts}/deregister.d/*.%{pkg_name}-server.*}
+%{?scl: %{_scl_scripts}/register.content/%{_sysconfdir}/%{pkg_name}-daemon.cnf}
+%{?scl: %{_scl_scripts}/register.content/%{_unitdir}/%{?scl_prefix}%{pkg_name}-daemon.service}
 %{?scl:%config(noreplace) %{?_scl_scripts}/service-environment}
 
 
