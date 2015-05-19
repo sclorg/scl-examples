@@ -1,21 +1,21 @@
 Software Collections examples
 =============================
 
-Software Collections (SCL) are RPM-based technology that give you power
+Software Collections (SCL) are an RPM-based technology that gives you the power
 to build, install, and use multiple versions of software on the same system,
 without affecting system-wide installed packages.
 
-This repository includes set of RPM SPEC files that follow the best practices
+This repository includes a set of RPM spec files that follow the best practices
 for creating Software Collections.
 
 This repo currently includes:
-  * foo/ -- SCL providing a CLI application and a daemon
-  * bar/ -- SCL extending foo1 collection and providing CLI application that uses
-  foo collection
+  * foo/ -- an SCL providing a CLI application and a daemon
+  * bar/ -- an SCL extending the foo1 collection and providing a CLI application
+  that uses the foo collection
 
-For building and using the example collections see README.md in particular
+For building and using the example collections, see README.md in particular
 directory.
 
-For more information about Software Collections or for seeking for already
-build Software Collections, go to https://www.softwarecollections.org/en/.
+For more information about Software Collections or to get pre-built Software
+Collections, go to: https://www.softwarecollections.org/en/
 
