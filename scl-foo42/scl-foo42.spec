@@ -167,7 +167,7 @@ mkdir -p %{buildroot}%{?_scl_scripts}/register.content%{_sysconfdir}
 
 %files
 
-%files runtime
+%files runtime -f filelist
 %doc README LICENSE
 %{?scl_files}
 %if 0%{?rhel} <= 6

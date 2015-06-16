@@ -139,7 +139,7 @@ selinuxenabled && load_policy || :
 
 %files
 
-%files runtime
+%files runtime -f filelist
 %doc README LICENSE
 %{?scl_files}
 %if 0%{?rhel} <= 6
